@@ -17,9 +17,9 @@ public class ObjectService
         try
         {
             var bucketExists = await _minioService.BucketExist(bucketName);
-            if (bucketExists)
+            if (!bucketExists)
             {
-                return ApiResponse<bool>.Fail("Bucket name already exists!", HttpStatusCode.BadRequest);
+                return ApiResponse<bool>.Fail("Bucket was not found!", HttpStatusCode.BadRequest);
             }
             
             string objectName = Guid.NewGuid().ToString().Substring(0, 7) + Path.GetExtension(file.FileName);
@@ -38,41 +38,69 @@ public class ObjectService
         }
     }
     
-    public async Task<ApiResponse<List<string>>> ListObjects(string bucketName)
+    public async Task<ApiResponse<bool>> RemoveObject(string bucketName, string objectName)
     {
         try
         {
             var bucketExists = await _minioService.BucketExist(bucketName);
-            if (bucketExists)
+            if (!bucketExists)
             {
-                return ApiResponse<List<string>>.Fail("Bucket name already exists!", HttpStatusCode.BadRequest);
+                return ApiResponse<bool>.Fail("Bucket was not found!", HttpStatusCode.BadRequest);
             }
             
-            var listBuckets = await _minioService.ListObjects(bucketName);
-            return ApiResponse<List<string>>.Success(listBuckets, HttpStatusCode.OK);
-        }
-        catch (Exception e)
-        {
-            return ApiResponse<List<string>>.Fail(e.Message, HttpStatusCode.InternalServerError);
-        }
-    }
-    
-    public async Task<ApiResponse<bool>> GetObject(string bucketName, string objectName, string fileName)
-    {
-        try
-        {
-            var bucketExists = await _minioService.BucketExist(bucketName);
-            if (bucketExists)
-            {
-                return ApiResponse<bool>.Fail("Bucket name already exists!", HttpStatusCode.BadRequest);
-            }
-            
-            await _minioService.GetObject(bucketName, objectName, fileName);
+            await _minioService.RemoveObject(bucketName, objectName);
             return ApiResponse<bool>.Success(true, HttpStatusCode.OK);
         }
         catch (Exception e)
         {
             return ApiResponse<bool>.Fail(e.Message, HttpStatusCode.InternalServerError);
+        }
+    }
+    
+    public async Task<ApiResponse<MemoryStream>> GetObject(string bucketName, string objectName, string fileName)
+    {
+        try
+        {
+            var bucketExists = await _minioService.BucketExist(bucketName);
+            if (!bucketExists)
+            {
+                return ApiResponse<MemoryStream>.Fail("Bucket was not found!", HttpStatusCode.BadRequest);
+            }
+            
+            var stream = await _minioService.GetObject(bucketName, objectName, fileName);
+            return ApiResponse<MemoryStream>.Success(stream, HttpStatusCode.OK);
+        }
+        catch (Exception e)
+        {
+            return ApiResponse<MemoryStream>.Fail(e.Message, HttpStatusCode.InternalServerError);
+        }
+    }
+    
+    public string GetContentType(string fileName)
+    {
+        if (fileName.Contains(".jpg"))
+        {
+            return "image/jpg";
+        }
+        else if (fileName.Contains(".jpeg"))
+        {
+            return "image/jpeg";
+        }
+        else if (fileName.Contains(".png"))
+        {
+            return "image/png";
+        }
+        else if (fileName.Contains(".gif"))
+        {
+            return "image/gif";
+        }
+        else if (fileName.Contains(".pdf"))
+        {
+            return "application/pdf";
+        }
+        else
+        {
+            return "application/octet-stream";
         }
     }
 }

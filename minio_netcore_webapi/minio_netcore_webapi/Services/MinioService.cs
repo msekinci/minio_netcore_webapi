@@ -1,3 +1,4 @@
+using System.Reactive.Linq;
 using CommunityToolkit.HighPerformance;
 using Minio;
 
@@ -79,7 +80,7 @@ public class MinioService
             item => listObjects.Add(item.Key),
             ex => throw ex,
             () => {});
-
+        observable.Wait();
         return listObjects;
     }
     
@@ -94,13 +95,20 @@ public class MinioService
     /// <param name="objectName">The file in bucket</param>
     /// <param name="fileName">The file name we want to download</param>
     /// <returns></returns>
-    public async Task GetObject(string bucketName, string objectName, string fileName)
+    public async Task<MemoryStream> GetObject(string bucketName, string objectName, string fileName)
     {
+        MemoryStream memoryStream = new MemoryStream();
         var args = new GetObjectArgs()
             .WithBucket(bucketName)
             .WithObject(objectName)
-            .WithFile(fileName);
+            .WithFile(fileName)
+            .WithCallbackStream((stream) =>
+            {
+                stream.CopyTo(memoryStream);
+            });
         await _minioClient.GetObjectAsync(args).ConfigureAwait(false);
+        memoryStream.Position = 0;
+        return memoryStream;
     }
     
     public async Task RemoveObject(string bucketName, string objectName, string? versionId = null)
