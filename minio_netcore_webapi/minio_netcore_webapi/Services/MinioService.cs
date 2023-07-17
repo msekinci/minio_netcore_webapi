@@ -1,3 +1,4 @@
+using CommunityToolkit.HighPerformance;
 using Minio;
 
 namespace minio_netcore_webapi.Services;
@@ -22,6 +23,8 @@ public class MinioService
             .Build();
     }
 
+    #region Bucket Methods
+    
     public async Task MakeBucket(string bucketName)
     {
         await _minioClient.MakeBucketAsync(
@@ -79,4 +82,57 @@ public class MinioService
 
         return listObjects;
     }
+    
+    #endregion
+
+    #region Object Methods
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="bucketName">Bucket name</param>
+    /// <param name="objectName">The file in bucket</param>
+    /// <param name="fileName">The file name we want to download</param>
+    /// <returns></returns>
+    public async Task GetObject(string bucketName, string objectName, string fileName)
+    {
+        var args = new GetObjectArgs()
+            .WithBucket(bucketName)
+            .WithObject(objectName)
+            .WithFile(fileName);
+        await _minioClient.GetObjectAsync(args).ConfigureAwait(false);
+    }
+    
+    public async Task RemoveObject(string bucketName, string objectName, string? versionId = null)
+    {
+        var args = new RemoveObjectArgs()
+            .WithBucket(bucketName)
+            .WithObject(objectName);
+        
+        if (!string.IsNullOrEmpty(versionId))
+        {
+            args = args.WithVersionId(versionId);
+        }
+        
+        await _minioClient.RemoveObjectAsync(args).ConfigureAwait(false);
+    }
+    
+    public async Task PutObject(string bucketName, MemoryStream stream, string objectName, string fileName, string contentType, string? versionId = null)
+    {
+        var metaData = new Dictionary<string, string>
+            (StringComparer.Ordinal)
+            {
+                { "FileName", fileName }
+            };
+        
+        var putObjectArgs = new PutObjectArgs()
+            .WithBucket(bucketName)
+            .WithObject(objectName)
+            .WithStreamData(stream)
+            .WithObjectSize(stream.Length)
+            .WithContentType(contentType);
+        await _minioClient.PutObjectAsync(putObjectArgs);
+    }
+
+    #endregion
 }
