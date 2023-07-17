@@ -10,6 +10,6 @@ public class BucketsController : ControllerBase
     public IActionResult GetBucketList()
     {
         
-        return Json();
+        return Ok();
     }
 }
