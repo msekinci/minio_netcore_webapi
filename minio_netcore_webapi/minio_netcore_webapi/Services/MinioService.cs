@@ -117,12 +117,12 @@ public class MinioService
         await _minioClient.RemoveObjectAsync(args).ConfigureAwait(false);
     }
     
-    public async Task PutObject(string bucketName, MemoryStream stream, string objectName, string fileName, string contentType, string? versionId = null)
+    public async Task PutObject(string bucketName, MemoryStream stream, string objectName,  string contentType, string? versionId = null)
     {
         var metaData = new Dictionary<string, string>
             (StringComparer.Ordinal)
             {
-                { "FileName", fileName }
+                { "FileName", objectName }
             };
         
         var putObjectArgs = new PutObjectArgs()
