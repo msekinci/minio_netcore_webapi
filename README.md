@@ -1,0 +1,1 @@
+# minio_netcore_webapi
