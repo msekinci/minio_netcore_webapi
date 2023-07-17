@@ -1,0 +1,22 @@
+version: "2"
+
+networks:
+  app-tier:
+    driver: bridge
+
+services:
+  minio:
+    image: 'bitnami/minio:latest'
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      - MINIO_ROOT_USER=minio_user
+      - MINIO_ROOT_PASSWORD=minio_password
+    volumes:
+      - minio_data:/data
+    networks:
+      - app-tier
+
+volumes:
+  minio_data:
